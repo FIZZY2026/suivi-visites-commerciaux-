@@ -565,38 +565,14 @@ function loadData(mag) {
     passages: Array.from({length:N_PASSAGES},()=>({date:'',restant:{},ajoute:{}}))
   };
 }
-const API_URL = "https://script.google.com/macros/s/AKfycbxnnoMjv0Hy0Oqyqu3wBSLE02kczT7HNTYwv_Y6ZbM4Z2-xBYp9iOhRpUCH4XecxN5knw/exec";
-async async function saveData() {
 
+function saveData() {
   const k = key(currentMag);
   const d = collectData();
-
   localStorage.setItem(k, JSON.stringify(d));
-
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({magasin: currentMag, donnees: d})
-    });
-
-    const result = await response.json();
-    console.log(result);
-
-    const el=document.getElementById("save-ok");
-    el.innerHTML="✅ Sauvegardé";
-    el.style.display="inline";
-
-  } catch(err) {
-    console.error(err);
-    const el=document.getElementById("save-ok");
-    el.innerHTML="❌ Erreur de synchronisation";
-    el.style.display="inline";
-  }
-
-  setTimeout(()=>{
-    document.getElementById("save-ok").style.display="none";
-  },2500);
+  const el = document.getElementById('save-ok');
+  el.style.display = 'inline';
+  setTimeout(()=>el.style.display='none', 2500);
 }
 
 function collectData() {
