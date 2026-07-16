@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fizzy — Suivi Gamme 27</title>
+<style>
+  :root {
+    --pink: #E8006A;
+    --violet: #7B2D8B;
+    --orange: #F7941D;
+    --yellow: #FFCC00;
+    --dark: #3D0020;
+    --pink-light: #FFF0F6;
+    --pink-pale: #FFD6EA;
+    --violet-light: #F5F0FF;
+    --red-light: #FDECEA;
+    --red: #B00000;
+    --green: #0A6E3A;
+    --green-light: #E6F9EE;
+    --amber: #92400E;
+    --amber-light: #FFF8E1;
+    --blue-light: #E0EEFF;
+    --blue: #1E40AF;
+    --gray: #8A5470;
+    --bg: #FFF5F9;
+    --white: #ffffff;
+    --border: #F5C6DA;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: var(--bg); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--pink);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 1rem;
+    height: 60px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 8px rgba(232,0,106,0.3);
+  }
+  header h1 { font-size: 14px; color: rgba(255,255,255,0.85); font-weight: 400; }
+  header .step-pill {
+    margin-left: auto; background: rgba(255,255,255,0.2);
+    color: white; padding: 4px 14px; border-radius: 20px; font-size: 13px;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; padding: 2rem; max-width: 900px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ── STEP 1 : sélection magasin ── */
+  .search-box {
+    background: var(--white); border-radius: 16px; padding: 2rem;
+    border: 1px solid var(--border); margin-bottom: 1.5rem;
+  }
+  .search-box h2 { font-size: 18px; color: var(--dark); margin-bottom: 0.5rem; }
+  .search-box p  { font-size: 14px; color: var(--gray); margin-bottom: 1.25rem; }
+  input[type=text], select {
+    width: 100%; padding: 12px 16px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 15px; outline: none; background: var(--white);
+    color: var(--dark); transition: border-color .15s;
+  }
+  input[type=text]:focus, select:focus { border-color: var(--pink); }
+  .mag-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px; margin-top: 1rem;
+  }
+  .mag-card {
+    background: var(--white); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px; cursor: pointer;
+    transition: all .15s; text-align: left;
+  }
+  .mag-card:hover { border-color: var(--pink); background: var(--pink-light); transform: translateY(-1px); }
+  .mag-card .mag-name { font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 4px; }
+  .mag-card .mag-info { font-size: 11px; color: var(--gray); }
+  .mag-card .mag-badge {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    border-radius: 20px; margin-top: 6px; font-weight: 500;
+  }
+  .fond { background: #EDE9FE; color: #5B21B6; }
+  .tg   { background: var(--pink-pale); color: var(--pink); }
+
+  /* ── STEP 2 : formulaire saisie ── */
+  .form-header {
+    background: var(--pink); color: var(--white); border-radius: 14px;
+    padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .form-header .mag-title { font-size: 18px; font-weight: 700; }
+  .form-header .mag-sub   { font-size: 13px; opacity: .85; margin-top: 2px; }
+  .form-header .back-btn  {
+    margin-left: auto; background: rgba(255,255,255,.2); border: none;
+    color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 13px;
+  }
+
+  .tab-bar {
+    display: flex; gap: 6px; margin-bottom: 1.5rem;
+    background: var(--white); padding: 6px; border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1; padding: 10px; border: none; border-radius: 8px;
+    font-size: 13px; cursor: pointer; background: transparent;
+    color: var(--gray); font-weight: 500; transition: all .15s;
+  }
+  .tab.active { background: var(--pink); color: white; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Date field */
+  .date-bar {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+  }
+  .date-bar label { font-size: 14px; font-weight: 600; color: var(--dark); white-space: nowrap; }
+  .date-bar input[type=date] {
+    width: auto; flex: 1; max-width: 220px;
+    padding: 8px 12px; font-size: 14px;
+  }
+
+  /* Section refs */
+  .ref-section {
+    background: var(--white); border-radius: 12px; border: 1px solid var(--border);
+    margin-bottom: 1rem; overflow: hidden;
+  }
+  .ref-section-header {
+    padding: 12px 16px; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ref-section-header.gamme { background: var(--pink); color: white; }
+  .ref-section-header.arret { background: var(--red); color: white; }
+
+  .ref-row {
+    display: grid; grid-template-columns: 110px 1fr 120px 120px;
+    gap: 8px; align-items: center; padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ref-row:last-child { border-bottom: none; }
+  .ref-row:nth-child(even) { background: var(--violet-light); }
+  .ref-row.arret-row:nth-child(even) { background: var(--red-light); }
+  .ref-code { font-size: 11px; color: var(--gray); font-family: monospace; }
+  .ref-name { font-size: 13px; color: var(--dark); font-weight: 500; }
+  .ref-row input[type=number] {
+    width: 100%; padding: 6px 10px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-weight: 600;
+    text-align: center; color: var(--dark);
+  }
+  .ref-row input[type=number]:focus { border-color: var(--pink); }
+  .qty-label { font-size: 11px; color: var(--gray); text-align: center; }
+
+  /* Totaux */
+  .totaux-bar {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px; margin: 1rem 0;
+  }
+  .total-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px; text-align: center;
+  }
+  .total-card .val { font-size: 28px; font-weight: 700; }
+  .total-card .lbl { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .total-card.impl .val { color: var(--pink); }
+  .total-card.rese .val { color: var(--violet); }
+  .total-card.reti .val { color: var(--red); }
+  .total-card.refs .val { color: var(--green); }
+
+  /* Passage */
+  .passage-grid {
+    display: grid; grid-template-columns: 110px 1fr 100px 100px;
+    gap: 8px; align-items: center; padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .passage-grid:last-child { border-bottom: none; }
+  .passage-grid:nth-child(even) { background: var(--blue-light); }
+
+  /* Bouton sauvegarder */
+  .save-bar {
+    position: sticky; bottom: 0; background: white;
+    border-top: 1px solid var(--border); padding: 1rem 2rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .save-btn {
+    background: var(--pink); color: white; border: none;
+    padding: 12px 28px; border-radius: 10px; font-size: 15px;
+    font-weight: 700; cursor: pointer; flex: 1;
+    transition: opacity .15s;
+  }
+  .save-btn:hover { opacity: .9; }
+  .save-btn.secondary {
+    background: var(--white); color: var(--pink);
+    border: 1.5px solid var(--pink); flex: 0 0 auto;
+  }
+  .save-ok { color: var(--green); font-size: 14px; font-weight: 600; display: none; }
+
+  /* Récap ── */
+  .recap-list { display: flex; flex-direction: column; gap: 8px; }
+  .recap-item {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+  }
+  .recap-item:hover { border-color: var(--pink); }
+  .recap-item .ri-name { font-size: 14px; font-weight: 600; color: var(--dark); flex: 1; }
+  .recap-item .ri-date { font-size: 12px; color: var(--gray); }
+  .ri-chip {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600;
+  }
+  .ok   { background: var(--green-light); color: var(--green); }
+  .nok  { background: var(--amber-light); color: var(--amber); }
+  .chip-val { font-size: 13px; font-weight: 700; color: var(--pink); min-width: 40px; text-align: right; }
+
+  /* ── PASSAGE TABS ── */
+  .passage-tab-bar {
+    display: flex; gap: 4px; margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .ptab {
+    padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 12px; cursor: pointer; background: var(--white); color: var(--dark);
+    font-weight: 600; transition: all .15s;
+  }
+  .ptab.active { background: var(--blue); color: white; border-color: var(--blue); }
+  .ptab.done   { border-color: var(--green); color: var(--green); }
+
+  /* Export */
+  .export-btn {
+    background: var(--violet); color: white; border: none;
+    padding: 10px 20px; border-radius: 8px; font-size: 13px;
+    cursor: pointer; font-weight: 600;
+  }
+  .add-btn {
+    background: var(--pink); color: white; border: none;
+    padding: 10px 20px; border-radius: 8px; font-size: 13px;
+    cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px;
+  }
+  .add-btn:hover { opacity: .88; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(61,0,32,.5); z-index: 200;
+    align-items: flex-start; justify-content: center; padding-top: 60px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 18px; padding: 2rem;
+    width: min(540px, 94vw); max-height: 85vh; overflow-y: auto;
+    border: 1.5px solid var(--border);
+  }
+  .modal h2 { font-size: 18px; color: var(--dark); margin-bottom: .3rem; }
+  .modal-sub { font-size: 13px; color: var(--gray); margin-bottom: 1.5rem; }
+  .form-row { margin-bottom: 1rem; }
+  .form-row label { display: block; font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 6px; }
+  .form-row input[type=text], .form-row select { font-size: 14px; padding: 10px 14px; }
+  .form-row .hint { font-size: 11px; color: var(--gray); margin-top: 4px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
+  .modal-actions button { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; border: 1.5px solid transparent; }
+  .btn-cancel { background: var(--bg); color: var(--gray); border-color: var(--border) !important; }
+  .btn-confirm { background: var(--pink); color: white; }
+  .modal-err { font-size: 13px; color: var(--red); margin-top: 8px; display: none; padding: 8px 12px; background: var(--red-light); border-radius: 8px; }
+  .delete-mag-btn {
+    font-size: 10px; padding: 2px 7px; border-radius: 6px; border: none;
+    background: var(--red-light); color: var(--red); cursor: pointer; margin-left: 4px; font-weight: 600;
+  }
+  .delete-mag-btn:hover { background: #f5b0b0; }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="data:image/png;base64,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" alt="O'Fizzy" style="height:44px;object-fit:contain;border-radius:8px;">
+  <h1>Suivi des ventes — Gamme 27</h1>
+  <div class="step-pill" id="step-label">Sélectionner un magasin</div>
+</header>
+
+<!-- ════════════════ SCREEN 1 : SÉLECTION ════════════════ -->
+<div class="screen active" id="screen-select">
+  <div class="search-box">
+    <h2>Sélectionnez votre magasin</h2>
+    <p>Recherchez par nom, enseigne ou commercial</p>
+    <input type="text" id="search-input" placeholder="Tapez pour filtrer... ex: Leclerc, Betty, Carrefour">
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:1rem;">
+    <select id="filter-comm" style="flex:1">
+      <option value="">Tous les commerciaux</option>
+    </select>
+    <select id="filter-ens" style="flex:1">
+      <option value="">Toutes les enseignes</option>
+    </select>
+    <button onclick="exportCSV()" class="export-btn" style="flex:0 0 auto">Exporter CSV</button>
+    <button class="add-btn" onclick="openAddModal()">+ Ajouter un magasin</button>
+  </div>
+
+<!-- ════════════ MODAL AJOUT MAGASIN ════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalIf(event)">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>Ajouter un magasin</h2>
+    <p class="modal-sub">Ce magasin sera ajouté à votre liste et sauvegardé dans votre navigateur.</p>
+
+    <div class="form-row">
+      <label>Nom du magasin *</label>
+      <input type="text" id="add-mag" placeholder="ex : E.LECLERC BORDEAUX" autocomplete="off">
+    </div>
+    <div class="form-row">
+      <label>Commercial *</label>
+      <input type="text" id="add-comm" list="comm-list" placeholder="ex : Betty" autocomplete="off">
+      <datalist id="comm-list">
+        <option value="Betty"><option value="Sylvie"><option value="Jordane">
+        <option value="Christopher"><option value="Christelle"><option value="Alexandre">
+        <option value="Elie"><option value="Stéphane"><option value="Thierry">
+        <option value="THOMAS"><option value="FRED"><option value="EMMANUEL">
+      </datalist>
+    </div>
+    <div class="form-row">
+      <label>Enseigne *</label>
+      <input type="text" id="add-ens" list="ens-list" placeholder="ex : LECLERC" autocomplete="off">
+      <datalist id="ens-list">
+        <option value="LECLERC"><option value="CARREFOUR"><option value="INTERMARCHE">
+        <option value="SUPER U"><option value="HYPER U"><option value="AUTRE">
+      </datalist>
+    </div>
+    <div class="form-row">
+      <label>Lieu d'implantation *</label>
+      <select id="add-lieu">
+        <option value="Fond Rayon Confiserie">Fond Rayon Confiserie</option>
+        <option value="TG Devant Caisse">TG Devant Caisse</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Taille du meuble *</label>
+      <select id="add-taille">
+        <option value="1M">1M</option>
+        <option value="1,33M">1,33M</option>
+        <option value="NC">NC (à préciser)</option>
+      </select>
+    </div>
+
+    <div class="modal-err" id="modal-err"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-confirm" onclick="confirmAdd()">Ajouter le magasin</button>
+    </div>
+  </div>
+</div>
+
+  <div id="mag-count" style="font-size:13px;color:var(--gray);margin-bottom:10px;"></div>
+  <div class="mag-grid" id="mag-grid"></div>
+</div>
+
+<!-- ════════════════ SCREEN 2 : SAISIE ════════════════ -->
+<div class="screen" id="screen-form">
+  <div class="form-header">
+    <div>
+      <div class="mag-title" id="form-title"></div>
+      <div class="mag-sub" id="form-sub"></div>
+    </div>
+    <button class="back-btn" onclick="goBack()">← Changer de magasin</button>
+  </div>
+
+  <!-- Totaux live -->
+  <div class="totaux-bar" id="totaux-bar">
+    <div class="total-card impl"><div class="val" id="tot-impl">0</div><div class="lbl">Unités implantées</div></div>
+    <div class="total-card rese"><div class="val" id="tot-rese">0</div><div class="lbl">En réserve</div></div>
+    <div class="total-card reti"><div class="val" id="tot-reti">0</div><div class="lbl">Refs arrêtées retirées</div></div>
+    <div class="total-card refs"><div class="val" id="tot-refs">0</div><div class="lbl">Refs implantées (≥1)</div></div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('implantation',this)">📦 Implantation</button>
+    <button class="tab" onclick="switchTab('reserve',this)">📥 Réserve</button>
+    <button class="tab" onclick="switchTab('passage',this)">🔄 Suivi passages</button>
+  </div>
+
+  <!-- TAB : IMPLANTATION -->
+  <div class="tab-panel active" id="tab-implantation">
+    <div class="date-bar">
+      <label>📅 Date d'implantation</label>
+      <input type="date" id="date-impl">
+    </div>
+
+    <div class="ref-section">
+      <div class="ref-section-header gamme">▶ Nouvelle Gamme 27 — Quantité implantée dans le meuble</div>
+      <div style="display:grid;grid-template-columns:110px 1fr 120px;gap:8px;padding:6px 16px;background:#f9f4ff">
+        <span class="qty-label">Code</span>
+        <span class="qty-label" style="text-align:left">Référence</span>
+        <span class="qty-label">Qté implantée</span>
+      </div>
+      <div id="rows-impl"></div>
+    </div>
+  </div>
+
+  <!-- TAB : RÉSERVE -->
+  <div class="tab-panel" id="tab-reserve">
+    <div class="ref-section">
+      <div class="ref-section-header arret">▶ Références arrêtées — Quantité retirée pour libérer de la place</div>
+      <div style="display:grid;grid-template-columns:110px 1fr 120px;gap:8px;padding:6px 16px;background:#fff5f5">
+        <span class="qty-label">Code</span>
+        <span class="qty-label" style="text-align:left">Référence</span>
+        <span class="qty-label">Qté retirée</span>
+      </div>
+      <div id="rows-arret"></div>
+    </div>
+
+    <div class="ref-section" style="margin-top:1rem;">
+      <div class="ref-section-header gamme">▶ Nouvelle Gamme 27 — Quantité mise en réserve (stock de remplacement)</div>
+      <div style="display:grid;grid-template-columns:110px 1fr 120px;gap:8px;padding:6px 16px;background:#f9f4ff">
+        <span class="qty-label">Code</span>
+        <span class="qty-label" style="text-align:left">Référence</span>
+        <span class="qty-label">Qté en réserve</span>
+      </div>
+      <div id="rows-rese"></div>
+    </div>
+  </div>
+
+  <!-- TAB : PASSAGES -->
+  <div class="tab-panel" id="tab-passage">
+    <div class="passage-tab-bar" id="passage-tabs"></div>
+    <div id="passage-content"></div>
+  </div>
+
+  <!-- Barre de sauvegarde -->
+  <div class="save-bar">
+    <button class="save-btn secondary" onclick="goBack()">← Retour</button>
+    <button class="save-btn" onclick="saveData()">💾 Sauvegarder</button>
+    <span class="save-ok" id="save-ok">✅ Données sauvegardées !</span>
+  </div>
+</div>
+
+<!-- ════════════════ SCREEN 3 : RÉCAP ════════════════ -->
+<div class="screen" id="screen-recap"></div>
+
+<script>
+const MAGASINS = [
+  {n:"Betty",mag:"CARREFOUR CREIL - SAINT-MAXIMIN",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Betty",mag:"CARREFOUR MAUBEUGE",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Betty",mag:"CARREFOUR SOISSONS",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Betty",mag:"INTERMARCHE SOMAIN",ens:"INTERMARCHE",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Betty",mag:"SUPER U VITRY EN ARTOIS",ens:"SUPER U",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Betty",mag:"CARREFOUR MARKET FEIGNIES",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Betty",mag:"CARREFOUR MARKET GUESNAIN",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Betty",mag:"E.LECLERC ST AMAND LES EAUX",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Betty",mag:"E.LECLERC LACROIX SAINT OUEN",ens:"LECLERC",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Betty",mag:"INTERMARCHE DOUCHY",ens:"INTERMARCHE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Betty",mag:"SUPER U STE GENEVIEVE",ens:"SUPER U",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Betty",mag:"UTILE NOUZONVILLE",ens:"AUTRE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Betty",mag:"E.LECLERC HIRSON",ens:"LECLERC",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Betty",mag:"E.LECLERC PONT STE MAXENCE",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"NC"},
+  {n:"Betty",mag:"E.LECLERC AULNOYE AYMERIES",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Sylvie",mag:"CARREFOUR BETHUNE",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Sylvie",mag:"CARREFOUR HAUBOURDIN",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Sylvie",mag:"CARREFOUR HENIN BEAUMONT",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Sylvie",mag:"CARREFOUR LA CHAPELLE D'ARMENTIERE",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Sylvie",mag:"CARREFOUR LENS",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Sylvie",mag:"CARREFOUR ROUBAIX",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Sylvie",mag:"E.LECLERC AMIENS",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Sylvie",mag:"E.LECLERC ARQUES",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Sylvie",mag:"E.LECLERC CALAIS",ens:"LECLERC",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Sylvie",mag:"INTERMARCHE ARRAS",ens:"INTERMARCHE",lieu:"Fond Rayon Confiserie",t:"1M"},
+  {n:"Sylvie",mag:"INTERMARCHE BAPAUME",ens:"INTERMARCHE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Jordane",mag:"E.LECLERC JONZAC",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"E.LECLERC TRELISSAC",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"E.LECLERC URRUGNE",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"E.LECLERC ST JEAN D ANGELY",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"E.LECLERC ST MEDARD EN JALLES",ens:"LECLERC",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Jordane",mag:"INTERMARCHE MACAU",ens:"INTERMARCHE",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"U EXPRESS AMBARES",ens:"SUPER U",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Jordane",mag:"LECLERC SAINT ASTIER",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"INTERMARCHE CADAUJAC",ens:"INTERMARCHE",lieu:"Fond Rayon Confiserie",t:"1M"},
+  {n:"Jordane",mag:"INTERMARCHE LANTON",ens:"INTERMARCHE",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"INTERMARCHE MONTPON MENESTEROL",ens:"INTERMARCHE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Jordane",mag:"LECLERC VIC EN VIGOR",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"E.LECLERC LESPARRE",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Jordane",mag:"SUPER U GALGON",ens:"SUPER U",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Christopher",mag:"NETTO ISTRES",ens:"AUTRE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Christopher",mag:"CARREFOUR VITROLLES",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Christopher",mag:"CARREFOUR AIX EN PROVENCE",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Christopher",mag:"CARREFOUR MARSEILLE",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Christopher",mag:"CARREFOUR AUBAGNE",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Christopher",mag:"E.LECLERC NICE ST ISIDORE",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Christopher",mag:"CARREFOUR ANTIBES",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Christopher",mag:"E.LECLERC CANNES",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Christopher",mag:"INTERMARCHE TOULON",ens:"INTERMARCHE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Christelle",mag:"CARREFOUR MARKET CHILLY MAZARIN",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Christelle",mag:"LECLERC BOBIGNY",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Christelle",mag:"INTERMARCHE GIF SUR YVETTE",ens:"INTERMARCHE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Christelle",mag:"INTERMARCHE GRETZ ARMAINVILLIERS",ens:"INTERMARCHE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Christelle",mag:"E.LECLERC FONTAINEBLEAU",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Alexandre",mag:"E.LECLERC CHAMBERY",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Alexandre",mag:"ITM SAINT BONNET DE MURE",ens:"INTERMARCHE",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Alexandre",mag:"CARREFOUR GRENOBLE",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Alexandre",mag:"CARREFOUR ANNECY",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Alexandre",mag:"INTERMARCHE VILLEURBANNE",ens:"INTERMARCHE",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Alexandre",mag:"SUPER U PRISSE",ens:"SUPER U",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Elie",mag:"E.LECLERC ALTKIRCH",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Elie",mag:"CL FOETZ",ens:"AUTRE",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Elie",mag:"E.LECLERC MULHOUSE",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Elie",mag:"INTERMARCHE COLMAR",ens:"INTERMARCHE",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Elie",mag:"E.LECLERC STRASBOURG",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Stéphane",mag:"E.LECLERC VERDUN",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Stéphane",mag:"E.LECLERC MEYZIEU",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"Stéphane",mag:"CARREFOUR VAULX EN VELIN",ens:"CARREFOUR",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Stéphane",mag:"SUPER U ST ETIENNE DE ST GEOIRS",ens:"SUPER U",lieu:"Fond Rayon Confiserie",t:"1M"},
+  {n:"Thierry",mag:"E.LECLERC VERDUN",ens:"LECLERC",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"Thierry",mag:"LECLERC EXPRESS ST MIHIEL",ens:"LECLERC",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"THOMAS",mag:"E.LECLERC AMBOISE",ens:"LECLERC",lieu:"TG Devant Caisse",t:"1M"},
+  {n:"THOMAS",mag:"E.LECLERC LIMOGES",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"THOMAS",mag:"HYPER U BOURGUEIL",ens:"HYPER U",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"FRED",mag:"HYPER U GRAND QUEVILLY",ens:"HYPER U",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"FRED",mag:"CARREFOUR EVREUX",ens:"CARREFOUR",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"EMMANUEL",mag:"E.LECLERC ORLY",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"EMMANUEL",mag:"SUPER U BESSANCOURT",ens:"SUPER U",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+  {n:"EMMANUEL",mag:"E.LECLERC PERSAN",ens:"LECLERC",lieu:"Fond Rayon Confiserie",t:"1,33M"},
+];
+
+const GAMME27 = [
+  ["FS01127","RED LASSOS"],["FS12927","SOUR LIPS"],["FS13427","SOUR BRIQUE COLA"],
+  ["FS12827","BUBBLE PIK"],["FS13027","VOLCANO"],["FS12427","SOUR CHILI PEPPER"],
+  ["FS12327","DÉLICE DE CROISSANTS"],["FS12127","AUBERGINES"],["FS12027","FASHION TIME"],
+  ["FS11827","SMILES"],["FS12627","SOUR BOTTLE MALLOW"],["FS12227","POPCORN MALLOW"],
+  ["FS12527","PIK'MALLOW"],["FS12727","SOUR LEMON MALLOW"],["FS00613","SCH COLLIER CANDY"],
+  ["FS00709","SCH LOLITA"],["FS004","SCH SCOOPY"],["FS01409","SCH MINI POPPI"],
+  ["FS00915","SCH TETINES PARTY"],["FS00108","SCH FIZZY ROLLS"],["FS05113","SCH ROUGE A LEVRES"],
+  ["FS06215","SCH CASH MONEY"],["FS05715","SCH SUCETTE TACHE LANGUE"],["FS10923","SCH DRINK FIZZ COLA"],
+  ["DPOPCH2","POPCORN CHOCOLAT CARAMEL (DISP 7 PCS)"],["DPOPCHB","POPCORN CHOC BLANC NOIX COCO (DISP 7 PCS)"],
+  ["DPOTCHO","POT DE CHOUCHOUS (DISP 18 PCS)"],["P4BIFRU","BIBI FRUITS X4 (CRT 20 PCS)"],
+  ["DCACHET","TUBO DE SCOOPY (CRT 12 PCS)"],["DPATMA2","MALLOW PAT PATROUILLE (CRT 2*15 PCS)"],
+  ["DE26MHE","HELLO KITTY MALLOW POP (CRT 2*18 PCS)"],["DBAPPOP","BARBE À PAPA POPPING (DISP 12 PCS)"],
+  ["DBBPPOT","BARBAPAPA (DISP 18 PCS)"],["DFIZSHO","FIZZY SHOCKS (CRT 2*16 PCS)"],
+  ["D24SHBU","BURGER BAG (DISP 12 PCS)"],["D24SHLU","LUNCH BAG (DISP 12 PCS)"],
+  ["DXFPI80","FILET PIÈCES CHOCOMONNAIE (DISP 75 PCS)"],["DTRDACA","DATTES CARAMEL POPCORN (DISP 12 PCS)"],
+  ["DTRDAPI","DATTES PISTACHIO CREAM (DISP 12 PCS)"],["DTRDAAP","DATTES SOUR APPLE (DISP 12 PCS)"],
+  ["DTRDACO","DATTES SOUR COLA (DISP 12 PCS)"],["DTRDAPE","DATTES CREAMY PEANUT BUTTER (DISP 12 PCS)"],
+  ["DPANPEA","BONBONS PEACH RINGS (DISP 14 PCS)"],["DPANCHE","BONBONS CHERRY (DISP 14 PCS)"],
+  ["DPANCOL","BONBONS SOUR COLA (DISP 14 PCS)"],["DPANFLU","BONBONS FLUFFY CLOUDS (DISP 14 PCS)"],
+  ["DPANBER","BONBONS BERRY OVALS (DISP 14 PCS)"],["DNAPCI3","SACHET NAPOLEON CITRON (CRT 12 PCS)"],
+  ["DPATFA4","VENTILATEUR PAT PATROUILLE (DISP 12 PCS)"],["DFROFA3","VENTILATEUR MIX DISNEY (DISP 12 PCS)"],
+  ["DMIXPRO","MIX PROJECTOR POP (DISP 12 PCS)"],["DBARPHO","BARBIE PHONE (DISP 15 PCS)"],
+  ["DHELBAG","HELLO KITTY CANDY BAG (CRT 2*6 PCS)"],["DHELPOP","HELLO KITTY TWIST TURN POP (CRT 4*6 PCS)"],
+  ["D25JECH","JELLY CHALLENGE (CRT 2*12 PCS)"],["DPRIBEA","BEAUTY PRINCESS (CRT 2*14 PCS)"],
+];
+
+const ARRETEES = [
+  "FS MIX BUBBLE","FS DEXTROSE MIX","FS FIZZ BOTTLE","WATER GAME BARBIE",
+  "CONES SURPRISES X20","POPPI GEANT","VERITABLE BAP","CANDY JET PAT PATROUILLE",
+  "TWISTY LOVE","FS SUCETTES CŒUR","DONUT BAG","FS GIRLY","FRIES","GLOSS BEAUTY",
+  "MINI DOGGIE","BRACELET DEXTROSE","TWISTY SPRAY","FIZZ BOTTLE","COLLIERS DEXTROSE",
+  "FIZZY SHOCKS BUBBLE GUM UNITAIRE","KING PIZZA","JUMBO TOASTIE",
+  "PROJECTOR SPRAY PAT PATROUILLE",
+];
+
+const N_PASSAGES = 8;
+let currentMag = null;
+let currentPassage = 0;
+let data = {};
+
+function key(mag) { return 'fizzy_' + mag.mag.replace(/\s/g,'_'); }
+
+function loadData(mag) {
+  const k = key(mag);
+  const raw = localStorage.getItem(k);
+  return raw ? JSON.parse(raw) : {
+    dateImpl: '', impl: {}, rese: {}, arret: {},
+    passages: Array.from({length:N_PASSAGES},()=>({date:'',restant:{},ajoute:{}}))
+  };
+}
+const API_URL = "https://script.google.com/macros/s/AKfycbxnnoMjv0Hy0Oqyqu3wBSLE02kczT7HNTYwv_Y6ZbM4Z2-xBYp9iOhRpUCH4XecxN5knw/exec";
+async async function saveData() {
+
+  const k = key(currentMag);
+  const d = collectData();
+
+  localStorage.setItem(k, JSON.stringify(d));
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({magasin: currentMag, donnees: d})
+    });
+
+    const result = await response.json();
+    console.log(result);
+
+    const el=document.getElementById("save-ok");
+    el.innerHTML="✅ Sauvegardé";
+    el.style.display="inline";
+
+  } catch(err) {
+    console.error(err);
+    const el=document.getElementById("save-ok");
+    el.innerHTML="❌ Erreur de synchronisation";
+    el.style.display="inline";
+  }
+
+  setTimeout(()=>{
+    document.getElementById("save-ok").style.display="none";
+  },2500);
+}
+
+function collectData() {
+  const d = { dateImpl: document.getElementById('date-impl').value,
+              impl:{}, rese:{}, arret:{},
+              passages: Array.from({length:N_PASSAGES},(_,i)=>{
+                const inp = document.getElementById(`p-date-${i}`);
+                return {date: inp?inp.value:'', restant:{}, ajoute:{}};
+              }) };
+  GAMME27.forEach(([code])=>{
+    const iv = document.getElementById(`impl-${code}`);
+    const rv = document.getElementById(`rese-${code}`);
+    if(iv) d.impl[code] = parseInt(iv.value)||0;
+    if(rv) d.rese[code] = parseInt(rv.value)||0;
+    for(let p=0;p<N_PASSAGES;p++){
+      const ri=document.getElementById(`pass-${p}-rest-${code}`);
+      const ai=document.getElementById(`pass-${p}-add-${code}`);
+      if(ri) d.passages[p].restant[code]=parseInt(ri.value)||0;
+      if(ai) d.passages[p].ajoute[code]=parseInt(ai.value)||0;
+    }
+  });
+  ARRETEES.forEach((ref,i)=>{
+    const av=document.getElementById(`arret-${i}`);
+    if(av) d.arret[ref]=parseInt(av.value)||0;
+  });
+  return d;
+}
+
+function updateTotals() {
+  let impl=0, rese=0, reti=0, refs=0;
+  GAMME27.forEach(([code])=>{
+    const iv=document.getElementById(`impl-${code}`);
+    const rv=document.getElementById(`rese-${code}`);
+    const vi=parseInt(iv?.value)||0;
+    const vr=parseInt(rv?.value)||0;
+    impl+=vi; rese+=vr; if(vi>0)refs++;
+  });
+  ARRETEES.forEach((_,i)=>{
+    const av=document.getElementById(`arret-${i}`);
+    reti+=parseInt(av?.value)||0;
+  });
+  document.getElementById('tot-impl').textContent=impl;
+  document.getElementById('tot-rese').textContent=rese;
+  document.getElementById('tot-reti').textContent=reti;
+  document.getElementById('tot-refs').textContent=refs;
+}
+
+// ── Filtres et liste magasins ──────────────────────────────────────────────
+const comms=[...new Set(MAGASINS.map(m=>m.n))].sort();
+const enss =[...new Set(MAGASINS.map(m=>m.ens))].sort();
+const fcEl=document.getElementById('filter-comm');
+const feEl=document.getElementById('filter-ens');
+comms.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;fcEl.appendChild(o);});
+enss.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;feEl.appendChild(o);});
+
+function renderGrid() {
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const fc=fcEl.value; const fe=feEl.value;
+  const filtered=MAGASINS.filter(m=>
+    (!q||(m.mag+m.n+m.ens).toLowerCase().includes(q)) &&
+    (!fc||m.n===fc) && (!fe||m.ens===fe)
+  );
+  const g=document.getElementById('mag-grid');
+  g.innerHTML='';
+  document.getElementById('mag-count').textContent=`${filtered.length} magasin${filtered.length>1?'s':''} affiché${filtered.length>1?'s':''}`;
+  filtered.forEach(m=>{
+    const d=loadData(m);
+    const hasSaisie=Object.values(d.impl).some(v=>v>0);
+    const div=document.createElement('div');
+    div.className='mag-card';
+    div.innerHTML=`
+      <div class="mag-name">${m.mag}</div>
+      <div class="mag-info">${m.n} · ${m.ens}</div>
+      <span class="mag-badge ${m.lieu.includes('Fond')?'fond':'tg'}">${m.lieu.includes('Fond')?'Fond rayon':'TG devant caisse'} ${m.t}</span>
+      ${hasSaisie?'<span class="mag-badge ok" style="margin-left:4px">✓ Saisi</span>':''}
+    `;
+    div.onclick=()=>openMag(m);
+    g.appendChild(div);
+  });
+}
+
+['input','change'].forEach(ev=>{
+  document.getElementById('search-input').addEventListener(ev,renderGrid);
+  fcEl.addEventListener(ev,renderGrid);
+  feEl.addEventListener(ev,renderGrid);
+});
+renderGrid();
+
+// ── Ouvrir un magasin ────────────────────────────────────────────────────
+function openMag(mag) {
+  currentMag=mag;
+  data=loadData(mag);
+  document.getElementById('form-title').textContent=mag.mag;
+  document.getElementById('form-sub').textContent=`${mag.n} · ${mag.ens} · ${mag.lieu} · ${mag.t}`;
+  document.getElementById('date-impl').value=data.dateImpl||'';
+  document.getElementById('step-label').textContent=mag.mag;
+  buildRows();
+  buildPassages();
+  switchTab('implantation', document.querySelector('.tab'));
+  show('screen-form');
+}
+
+function buildRows() {
+  const ri=document.getElementById('rows-impl');
+  const rr=document.getElementById('rows-rese');
+  const ra=document.getElementById('rows-arret');
+  ri.innerHTML=''; rr.innerHTML=''; ra.innerHTML='';
+
+  GAMME27.forEach(([code,name])=>{
+    const val=data.impl[code]||0;
+    const rval=data.rese[code]||0;
+    const row=`<div class="ref-row">
+      <span class="ref-code">${code}</span>
+      <span class="ref-name">${name}</span>
+      <input type="number" id="impl-${code}" value="${val||''}" min="0" placeholder="0" oninput="updateTotals()">
+    </div>`;
+    ri.innerHTML+=row;
+    rr.innerHTML+=`<div class="ref-row">
+      <span class="ref-code">${code}</span>
+      <span class="ref-name">${name}</span>
+      <input type="number" id="rese-${code}" value="${rval||''}" min="0" placeholder="0" oninput="updateTotals()">
+    </div>`;
+  });
+
+  ARRETEES.forEach((ref,i)=>{
+    const val=data.arret[ref]||0;
+    ra.innerHTML+=`<div class="ref-row arret-row">
+      <span class="ref-code" style="color:var(--red)">—</span>
+      <span class="ref-name" style="color:var(--red)">${ref}</span>
+      <input type="number" id="arret-${i}" value="${val||''}" min="0" placeholder="0" oninput="updateTotals()" style="border-color:#F5C6DA">
+    </div>`;
+  });
+  updateTotals();
+}
+
+function buildPassages() {
+  const tabs=document.getElementById('passage-tabs');
+  tabs.innerHTML='';
+  for(let p=0;p<N_PASSAGES;p++){
+    const d=data.passages[p]||{date:'',restant:{},ajoute:{}};
+    const hasSaisie=d.date||(Object.values(d.restant).some(v=>v>0));
+    const btn=document.createElement('button');
+    btn.className='ptab'+(hasSaisie?' done':'')+(p===0?' active':'');
+    btn.textContent=`Passage ${p+1}${hasSaisie?' ✓':''}`;
+    btn.onclick=(()=>{const pp=p;return()=>showPassage(pp,btn)})();
+    tabs.appendChild(btn);
+  }
+  showPassage(0, tabs.querySelector('.ptab'));
+}
+
+function showPassage(p, btn) {
+  currentPassage=p;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const pdata=data.passages[p]||{date:'',restant:{},ajoute:{}};
+  const c=document.getElementById('passage-content');
+  let html=`<div class="ref-section">
+    <div class="ref-section-header" style="background:var(--blue);color:white">
+      ▶ Passage ${p+1} — Suivi des références
+    </div>
+    <div class="date-bar" style="border-radius:0;border-left:none;border-right:none">
+      <label>📅 Date de visite</label>
+      <input type="date" id="p-date-${p}" value="${pdata.date||''}">
+    </div>
+    <div style="display:grid;grid-template-columns:110px 1fr 110px 110px;gap:8px;padding:6px 16px;background:#EEF4FF">
+      <span class="qty-label">Code</span>
+      <span class="qty-label" style="text-align:left">Référence</span>
+      <span class="qty-label">Qté restante</span>
+      <span class="qty-label">Qté ajoutée</span>
+    </div>`;
+
+  GAMME27.forEach(([code,name])=>{
+    const vr=pdata.restant[code]||0;
+    const va=pdata.ajoute[code]||0;
+    html+=`<div class="passage-grid">
+      <span class="ref-code">${code}</span>
+      <span class="ref-name">${name}</span>
+      <input type="number" id="pass-${p}-rest-${code}" value="${vr||''}" min="0" placeholder="0">
+      <input type="number" id="pass-${p}-add-${code}" value="${va||''}" min="0" placeholder="0">
+    </div>`;
+  });
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  else document.querySelectorAll('.tab').forEach((t,i)=>{if(['implantation','reserve','passage'][i]===name)t.classList.add('active');});
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goBack() {
+  show('screen-select');
+  document.getElementById('step-label').textContent='Sélectionner un magasin';
+  renderGrid();
+}
+
+// ── Export CSV ──────────────────────────────────────────────────────────
+function exportCSV() {
+  let csv='Magasin;Commercial;Enseigne;Lieu;Taille;Date implantation;';
+  csv+=GAMME27.map(([c,n])=>`${n} (impl);${n} (réserve)`).join(';')+'\n';
+  MAGASINS.forEach(m=>{
+    const d=loadData(m);
+    let row=`"${m.mag}";"${m.n}";"${m.ens}";"${m.lieu}";"${m.t}";"${d.dateImpl||''}";`;
+    row+=GAMME27.map(([c])=>`${d.impl[c]||0};${d.rese[c]||0}`).join(';');
+    csv+=row+'\n';
+  });
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fizzy_suivi_gamme27.csv';
+  a.click();
+}
+
+// ── Magasins personnalisés (localStorage) ─────────────────────────────────
+function loadCustomMags() {
+  const raw = localStorage.getItem('fizzy_custom_mags');
+  return raw ? JSON.parse(raw) : [];
+}
+function saveCustomMags(list) {
+  localStorage.setItem('fizzy_custom_mags', JSON.stringify(list));
+}
+function getAllMags() {
+  return [...MAGASINS, ...loadCustomMags()];
+}
+
+// Surcharger renderGrid pour inclure magasins custom
+const _origRenderGrid = renderGrid;
+function renderGrid() {
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const fc=fcEl.value; const fe=feEl.value;
+  const all = getAllMags();
+  const filtered=all.filter(m=>
+    (!q||(m.mag+m.n+m.ens).toLowerCase().includes(q)) &&
+    (!fc||m.n===fc) && (!fe||m.ens===fe)
+  );
+  // Rebuild filter dropdowns dynamically
+  const allComms=[...new Set(all.map(m=>m.n))].sort();
+  const allEnss=[...new Set(all.map(m=>m.ens))].sort();
+  const curComm=fcEl.value, curEns=feEl.value;
+  fcEl.innerHTML='<option value="">Tous les commerciaux</option>';
+  allComms.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;if(c===curComm)o.selected=true;fcEl.appendChild(o);});
+  feEl.innerHTML='<option value="">Toutes les enseignes</option>';
+  allEnss.forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;if(e===curEns)o.selected=true;feEl.appendChild(o);});
+
+  const g=document.getElementById('mag-grid');
+  g.innerHTML='';
+  document.getElementById('mag-count').textContent=`${filtered.length} magasin${filtered.length>1?'s':''} affiché${filtered.length>1?'s':''}  (dont ${loadCustomMags().length} ajouté${loadCustomMags().length>1?'s':''})`;
+  filtered.forEach(m=>{
+    const d=loadData(m);
+    const isCustom=!MAGASINS.find(x=>x.mag===m.mag&&x.n===m.n);
+    const hasSaisie=Object.values(d.impl).some(v=>v>0);
+    const div=document.createElement('div');
+    div.className='mag-card';
+    div.innerHTML=`
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div class="mag-name">${m.mag}</div>
+        ${isCustom?`<button class="delete-mag-btn" onclick="event.stopPropagation();deleteMag('${m.mag}','${m.n}')">✕</button>`:''}
+      </div>
+      <div class="mag-info">${m.n} · ${m.ens}</div>
+      <span class="mag-badge ${m.lieu.includes('Fond')?'fond':'tg'}">${m.lieu.includes('Fond')?'Fond rayon':'TG caisse'} ${m.t}</span>
+      ${isCustom?'<span class="mag-badge" style="background:#FFF8E1;color:#92400E;margin-left:4px">+ Ajouté</span>':''}
+      ${hasSaisie?'<span class="mag-badge ok" style="margin-left:4px">✓ Saisi</span>':''}
+    `;
+    div.onclick=()=>openMag(m);
+    g.appendChild(div);
+  });
+}
+
+function deleteMag(mag, comm) {
+  if(!confirm(`Supprimer "${mag}" de la liste ? Les données saisies seront conservées.`)) return;
+  const list = loadCustomMags().filter(m=>!(m.mag===mag&&m.n===comm));
+  saveCustomMags(list);
+  renderGrid();
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('add-mag').value='';
+  document.getElementById('add-comm').value='';
+  document.getElementById('add-ens').value='';
+  document.getElementById('add-lieu').value='Fond Rayon Confiserie';
+  document.getElementById('add-taille').value='1,33M';
+  document.getElementById('modal-err').style.display='none';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('add-mag').focus(),100);
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function closeModalIf(e) {
+  if(e.target===document.getElementById('modal-overlay')) closeModal();
+}
+function confirmAdd() {
+  const mag  = document.getElementById('add-mag').value.trim().toUpperCase();
+  const comm = document.getElementById('add-comm').value.trim();
+  const ens  = document.getElementById('add-ens').value.trim().toUpperCase();
+  const lieu = document.getElementById('add-lieu').value;
+  const t    = document.getElementById('add-taille').value;
+  const err  = document.getElementById('modal-err');
+
+  if(!mag||!comm||!ens) {
+    err.textContent='Veuillez remplir tous les champs obligatoires.';
+    err.style.display='block'; return;
+  }
+  const all = getAllMags();
+  if(all.find(m=>m.mag===mag&&m.n===comm)) {
+    err.textContent='Ce magasin est déjà dans la liste pour ce commercial.';
+    err.style.display='block'; return;
+  }
+  const newMag = {n:comm, mag, ens, lieu, t};
+  const list = loadCustomMags();
+  list.push(newMag);
+  saveCustomMags(list);
+  closeModal();
+  renderGrid();
+  // Ouvrir directement la fiche du nouveau magasin
+  setTimeout(()=>openMag(newMag), 200);
+}
+
+// Appui Escape pour fermer le modal
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+</script>
+</body>
+</html>
